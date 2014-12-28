@@ -1,0 +1,15 @@
+[submodule "xsoup"]
+	path = xsoup
+	url = https://github.com/code4craft/xsoup.git
+[submodule "jsoup"]
+	path = jsoup
+	url = https://github.com/jhy/jsoup.git
+[submodule "FlatUI"]
+	path = FlatUI
+	url = https://github.com/eluleci/FlatUI.git
+[submodule "MaterialEditText"]
+	path = MaterialEditText
+	url = https://github.com/rengwuxian/MaterialEditText.git
+[submodule "LDrawer"]
+	path = LDrawer
+	url = https://github.com/ikimuhendis/LDrawer.git
