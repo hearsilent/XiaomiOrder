@@ -13,3 +13,15 @@
 [submodule "LDrawer"]
 	path = LDrawer
 	url = https://github.com/ikimuhendis/LDrawer.git
+[submodule "RippleEffect"]
+	path = RippleEffect
+	url = https://github.com/traex/RippleEffect.git
+[submodule "AlertDialogPro"]
+	path = AlertDialogPro
+	url = https://github.com/fengdai/AlertDialogPro.git
+[submodule "PullToRefresh"]
+	path = PullToRefresh
+	url = https://github.com/Bencodes/PullToRefresh.git
+[submodule "AnimatedExpandableListView"]
+	path = AnimatedExpandableListView
+	url = https://github.com/idunnololz/AnimatedExpandableListView.git
