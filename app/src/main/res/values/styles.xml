@@ -2,6 +2,10 @@
 
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <item name="android:actionBarStyle">@style/ActionBar</item>
+        <item name="colorPrimary">#FFFFFF</item>
+        <item name="colorPrimaryDark">#FFFFFF</item>
+        <item name="colorAccent">#87CEFA</item>
+        <item name="alertDialogProTheme">@style/AppTheme.FlavoredMaterial</item>
     </style>
     <style name="ActionBar" parent="android:Widget.ActionBar">
         <item name="android:background">@color/actionbar_color</item>
@@ -13,4 +17,18 @@
         <item name="android:textSize">18sp</item>
     </style>
 
+    <style name="AppTheme.FlavoredMaterial" parent="Theme.AlertDialogPro.Material">
+        <item name="colorPrimary">#FFFFFF</item>
+        <item name="colorPrimaryDark">#FFFFFF</item>
+        <item name="colorAccent">#87CEFA</item>
+        <item name="android:windowTitleStyle">@style/AdpTitleStyle</item>
+        <item name="adpButtonBarNegativeButtonStyle">@style/AdpNormalButtonStyle</item>
+        <item name="adpButtonBarNeutralButtonStyle">@style/AdpNormalButtonStyle</item>
+    </style>
+    <style name="AdpTitleStyle" parent="DialogWindowTitle.AlertDialogPro.Material">
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+    <style name="AdpNormalButtonStyle" parent="Widget.AlertDialogPro.Material.Button">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
 </resources>

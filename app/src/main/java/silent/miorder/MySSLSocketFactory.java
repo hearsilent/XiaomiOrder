@@ -81,17 +81,17 @@ public class MySSLSocketFactory extends SSLSocketFactory {
             ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
             return new DefaultHttpClient(ccm, params);
         } catch (KeyStoreException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (CertificateException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (IOException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (KeyManagementException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (UnrecoverableKeyException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         return new DefaultHttpClient();
     }

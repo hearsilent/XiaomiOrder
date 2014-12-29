@@ -5,8 +5,13 @@ Xiaomi Order
 - Sign In
 - LDrawer (Material Design)
 - MaterialEditText (Material Design)
+- AlertDialogPro (Material Design)
+- RippleEffect (Material Design)
 - FlatUI
-- Order (Thread)
+- PullToRefresh
+- AnimatedExpandableListView
+- Order 
 
 ## 待開發功能:
-- Order (UI)
+- Order (UI優化)
+- PullToRefresh (以baoyongzhang/android-PullRefreshLayout優化)
