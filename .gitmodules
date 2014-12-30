@@ -19,9 +19,6 @@
 [submodule "AlertDialogPro"]
 	path = AlertDialogPro
 	url = https://github.com/fengdai/AlertDialogPro.git
-[submodule "PullToRefresh"]
-	path = PullToRefresh
-	url = https://github.com/Bencodes/PullToRefresh.git
 [submodule "AnimatedExpandableListView"]
 	path = AnimatedExpandableListView
 	url = https://github.com/idunnololz/AnimatedExpandableListView.git
