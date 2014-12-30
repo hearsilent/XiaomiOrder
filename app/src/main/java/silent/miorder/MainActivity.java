@@ -11,12 +11,14 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
@@ -84,8 +86,14 @@ public class MainActivity extends Activity {
 
     Runnable OrderRunnable;
     Runnable LoginRunnable;
+    Runnable PinCodeRunnable;
+    Runnable CancelRunnable;
+
+    private String _bank = "seven_eleven";
+    private String _OrderId = "";
 
     AlertDialog LoadingDialog;
+    private int mSingleChoice = 0;
 
     private AnimatedExpandableListView mList;
     private ExampleAdapter OrderListAdapter;
@@ -115,6 +123,8 @@ public class MainActivity extends Activity {
             new Thread(OrderRunnable).start();
         }
 
+
+
         LoginRunnable = new Runnable() {
             @Override
             public void run() {
@@ -142,6 +152,41 @@ public class MainActivity extends Activity {
                         LoginHandler.sendEmptyMessage(2);
                     }
                 } catch (Exception e) {
+                    LoginHandler.sendEmptyMessage(1);
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        PinCodeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    List<NameValuePair> params = new LinkedList<>();
+                    params.add(new BasicNameValuePair("bank", _bank));
+                    Document document = Jsoup.parse( post_url_contents(_confirmOrder + _OrderId + "#", params, cookieStore) );
+                    Message message = Message.obtain();
+                    message.obj = Xsoup.compile("/html/body/div[3]/div/div[2]/div/div[1]/ul/li[2]").evaluate(document).getElements().text();
+                    message.what = 1;
+                    PincodeHandler.sendMessage(message);
+                } catch (Exception e) {
+                    PincodeHandler.sendEmptyMessage(-1);
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        CancelRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    get_url_contents(_cancelOrder + _OrderId, null, cookieStore);
+                    Document document = Jsoup.parse( get_url_contents(_orderView + _OrderId, null, cookieStore) );
+                    if (document.html().contains("已關閉"))
+                        CancleHandler.sendEmptyMessage(1);
+                    else
+                        CancleHandler.sendEmptyMessage(-1);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -156,7 +201,7 @@ public class MainActivity extends Activity {
                     items.clear();
                     OrderHandler.sendEmptyMessage(1);
 
-                    String _Payment = null, _Tcat = null, _Status = null, _Xiaomi = null;
+                    String _Payment = null, _Tcat = "", _Status = null, _Xiaomi = null;
                     int OrderItemCount = 0, OrderItemCounter = -1;
                     ArrayList<String> PageList = new ArrayList<>();
                     PageList.add(_orderUrl);
@@ -190,9 +235,13 @@ public class MainActivity extends Activity {
                             Detail[OrderItemCounter][0] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[1]/td").evaluate(documentx).getElements().text();
                             Detail[OrderItemCounter][1] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td").evaluate(documentx).getElements().text().split(" ")[ Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td").evaluate(documentx).getElements().text().split(" ").length - 1];
                             Detail[OrderItemCounter][2] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[3]/td").evaluate(documentx).getElements().text();
-                            OrderDetailCount[OrderItemCounter][0] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li").evaluate(documentx).list().size();
                             for (int j = 1; j <= Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li").evaluate(documentx).list().size(); j++)
+                            {
+                                if (Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li[" + j + "]/a[2]").evaluate(documentx).get() == null)
+                                    continue;
+                                OrderDetailCount[OrderItemCounter][0] = j;
                                 OrderDetail[OrderItemCounter][j - 1] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li[" + j + "]/a[2]").evaluate(documentx).getElements().text();
+                            }
                             _Payment = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[3]/div/span/span").evaluate(documentx).getElements().text();
                             _Status = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[4]/div/span").evaluate(documentx).getElements().text();
                             GroupItem item = new GroupItem();
@@ -200,6 +249,8 @@ public class MainActivity extends Activity {
                             item.title = "訂單號：" + _Xiaomi;
                             ChildItem child = new ChildItem();
                             child.title = "目前狀態：" + _Status;
+                            if (_Status.length() == 4)
+                                child.hint = "點擊繳費";
                             item.items.add(child);
                             child = new ChildItem();
                             child.title = "金額：" + _Payment + "元";
@@ -216,11 +267,14 @@ public class MainActivity extends Activity {
                             child.hint = "點擊查看";
                             item.items.add(child);
                             items.add(item);
+
+                            _Tcat = "";
                             OrderHandler.sendEmptyMessage(1);
                         }
                     }
                     OrderHandler.sendEmptyMessage(2);
                 } catch (Exception e) {
+                    OrderHandler.sendEmptyMessage(2);
                     e.printStackTrace();
                 }
             }
@@ -337,7 +391,6 @@ public class MainActivity extends Activity {
                 SignInButton.setEnabled(false);
                 UserNameEditText.setEnabled(false);
                 PasswordEditText.setEnabled(false);
-
                 LoadingDialog.setMessage("Loading...");
                 ((ProgressDialogPro) LoadingDialog).setIndeterminate(true);
                 ((ProgressDialogPro) LoadingDialog).setProgressStyle(ProgressDialogPro.STYLE_SPINNER);
@@ -389,7 +442,7 @@ public class MainActivity extends Activity {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
         mDrawerToggle.syncState();
         String[] values = new String[]{ "Sign out","Bug Report", "Share", "About" };
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, values);
         mDrawerList.setAdapter(adapter);
         mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -425,29 +478,60 @@ public class MainActivity extends Activity {
                                         int groupPosition, int childPosition, long id) {
                 if (layout.isRefreshing())
                     return true;
-                switch (childPosition)
-                {
+                switch (childPosition) {
                     case 0:
-                        if (OrderListAdapter.getChild(groupPosition, childPosition).title.length() != 9)
-                        {
+                        if (OrderListAdapter.getChild(groupPosition, childPosition).title.length() == 9) {
+                            mSingleChoice = 0;
                             new AlertDialogPro.Builder(MainActivity.this)
                                     .setIcon(R.drawable.ic_payment_white_48dp)
                                     .setTitle("繳費")
-                                    .setSingleChoiceItems(new String[]{"7-11繳費", "全家繳費"},
+                                    .setSingleChoiceItems(new String[]{"7-11繳費", "全家繳費", "取消訂單"},
                                             0,
                                             new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
-
+                                                    mSingleChoice = which;
                                                 }
                                             })
-                                    .setPositiveButton("確定", null)
-                                    .show();
+                                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            switch (mSingleChoice)
+                                            {
+                                                case 0:
+                                                    _bank = "seven_eleven";
+                                                    LoadingDialog.setMessage("Loading...");
+                                                    LoadingDialog.show();
+                                                    new Thread(PinCodeRunnable).start();
+                                                    break;
+                                                case 1:
+                                                    _bank = "familymart";
+                                                    LoadingDialog.setMessage("Loading...");
+                                                    LoadingDialog.show();
+                                                    new Thread(PinCodeRunnable).start();
+                                                    break;
+                                                case 2:
+                                                    new AlertDialogPro.Builder(MainActivity.this)
+                                                            .setTitle("MI Order")
+                                                            .setIcon(R.drawable.ic_warning_amber_48dp)
+                                                            .setMessage("是否取消訂單？")
+                                                            .setNegativeButton("取消", null)
+                                                            .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                                                                @Override
+                                                                public void onClick(DialogInterface dialog, int which) {
+                                                                    LoadingDialog.setMessage("Loading...");
+                                                                    LoadingDialog.show();
+                                                                    new Thread(CancelRunnable).start();
+                                                                }
+                                                            }).show();
+                                                    break;
+                                            }
+                                        }
+                                    }).show();
                         }
                         break;
                     case 2:
-                        if (!OrderListAdapter.getChild(groupPosition, childPosition).title.equals("運輸單號："))
-                        {
+                        if (!OrderListAdapter.getChild(groupPosition, childPosition).title.equals("運輸單號：")) {
                             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID=" + OrderListAdapter.getChild(groupPosition, childPosition).title.split("：")[1]));
                             startActivity(browserIntent);
                         }
@@ -461,14 +545,30 @@ public class MainActivity extends Activity {
                         break;
                     case 4:
                         String[] NewOrderDetail = Arrays.copyOf(OrderDetail[groupPosition], OrderDetailCount[groupPosition][0]);
+                        System.out.println(OrderDetailCount[groupPosition][0]);
                         new AlertDialogPro.Builder(MainActivity.this).setTitle("訂單明細")
                                 .setIcon(R.drawable.ic_receipt_white_48dp)
                                 .setItems(NewOrderDetail, null)
-                                .setPositiveButton("確定",null)
+                                .setPositiveButton("確定", null)
                                 .show();
                         break;
                 }
                 return false;
+            }
+        });
+
+        mList.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem != 0)
+                    layout.setEnabled(false);
+                else
+                    layout.setEnabled(true);
             }
         });
 
@@ -480,6 +580,8 @@ public class MainActivity extends Activity {
                 // expansion/
                 if (layout.isRefreshing())
                     return true;
+
+                _OrderId = OrderListAdapter.getGroup(groupPosition).title.split("：")[1];
                 if (OldPosition != -1 && OldPosition != groupPosition)
                     mList.collapseGroup(OldPosition);
                 OldPosition = groupPosition;
@@ -568,7 +670,6 @@ public class MainActivity extends Activity {
             {
                 case -1:
                     layout.setRefreshing(true);
-                    //mAttacher.setRefreshing();
                     break;
                 case 1:
                     OrderListAdapter = new ExampleAdapter(MainActivity.this);
@@ -577,7 +678,55 @@ public class MainActivity extends Activity {
                     break;
                 case 2:
                     layout.setRefreshing(false);
-                    //mAttacher.setRefreshComplete();
+                    break;
+            }
+        };
+    };
+
+    private Handler PincodeHandler = new Handler() {
+        @Override
+        public void handleMessage(android.os.Message msg) {
+            AlertDialogPro.Builder builder = new AlertDialogPro.Builder(MainActivity.this);
+            switch (msg.what)
+            {
+                case -1:
+                    LoadingDialog.dismiss();
+                    builder.setTitle("Error").
+                            setMessage("系統繁忙請自行取得PinCode").
+                            setIcon(R.drawable.ic_error_red_48dp).
+                            setPositiveButton("確定", null).show();
+                    break;
+                default:
+                    LoadingDialog.dismiss();
+                    builder.setTitle("MI Order").
+                            setIcon(R.drawable.ic_payment_white_48dp).
+                            setMessage((String) msg.obj).
+                            setPositiveButton("確定", null).show();
+                    break;
+            }
+        };
+    };
+
+    private Handler CancleHandler = new Handler() {
+        @Override
+        public void handleMessage(android.os.Message msg) {
+            AlertDialogPro.Builder builder = new AlertDialogPro.Builder(MainActivity.this);
+            switch (msg.what)
+            {
+                case -1:
+                    LoadingDialog.dismiss();
+                    builder.setTitle("Error").
+                            setMessage("取消訂單失敗 , 請稍後再試 !").
+                            setIcon(R.drawable.ic_error_red_48dp).
+                            setPositiveButton("確定", null).show();
+                    break;
+                case 1:
+                    LoadingDialog.dismiss();
+                    builder.setTitle("MI Order").
+                            setIcon(R.drawable.ic_launcher).
+                            setMessage("取消訂單成功 !").
+                            setPositiveButton("確定", null).show();
+                    new Thread(OrderRunnable).start();
                     break;
             }
         };
