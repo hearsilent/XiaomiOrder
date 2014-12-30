@@ -22,3 +22,9 @@
 [submodule "AnimatedExpandableListView"]
 	path = AnimatedExpandableListView
 	url = https://github.com/idunnololz/AnimatedExpandableListView.git
+[submodule "PullRefreshLayout"]
+	path = PullRefreshLayout
+	url = https://github.com/baoyongzhang/android-PullRefreshLayout.git
+[submodule "MaterialDesignIcons"]
+	path = MaterialDesignIcons
+	url = https://github.com/google/material-design-icons.git
