@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,9 +58,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import silent.pullrefreshlayout.PullRefreshLayout;
 import us.codecraft.xsoup.Xsoup;
 
-public class MainActivity extends Activity implements PullToRefreshView.OnPullToRefreshListener {
+public class MainActivity extends Activity {
     public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0";
 
     String _loginPassportUrl = "https://account.xiaomi.com/pass/serviceLoginAuth2";
@@ -87,7 +87,6 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
 
     AlertDialog LoadingDialog;
 
-    protected PullToRefreshView.Attacher mAttacher;
     private AnimatedExpandableListView mList;
     private ExampleAdapter OrderListAdapter;
 
@@ -97,6 +96,8 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
     List<GroupItem> items = new ArrayList<>();
     int OldPosition = -1;
     String NowLayout = "Main";
+
+    PullRefreshLayout layout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -186,9 +187,9 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                             if (Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[3]/table/tbody/tr[2]").evaluate(documentx).get() != null)
                                 _Tcat = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[3]/table/tbody/tr[2]/td").evaluate(documentx).getElements().text();
                             OrderItemCounter ++;
-                            Detail[OrderItemCounter][0] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[1]").evaluate(documentx).getElements().text();
-                            Detail[OrderItemCounter][1] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]").evaluate(documentx).getElements().text().split(" ")[ Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]").evaluate(documentx).getElements().text().split(" ").length - 1];
-                            Detail[OrderItemCounter][2] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[3]").evaluate(documentx).getElements().text();
+                            Detail[OrderItemCounter][0] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[1]/td").evaluate(documentx).getElements().text();
+                            Detail[OrderItemCounter][1] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td").evaluate(documentx).getElements().text().split(" ")[ Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[2]/td").evaluate(documentx).getElements().text().split(" ").length - 1];
+                            Detail[OrderItemCounter][2] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[2]/div[1]/table/tbody/tr[3]/td").evaluate(documentx).getElements().text();
                             OrderDetailCount[OrderItemCounter][0] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li").evaluate(documentx).list().size();
                             for (int j = 1; j <= Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li").evaluate(documentx).list().size(); j++)
                                 OrderDetail[OrderItemCounter][j - 1] = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[1]/ul/li[" + j + "]/a[2]").evaluate(documentx).getElements().text();
@@ -356,9 +357,14 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
         ab.setHomeButtonEnabled(true);
 
         mList = (AnimatedExpandableListView) super.findViewById(R.id.OrderList);
-        mAttacher = new PullToRefreshView.Attacher(mList);
-        mAttacher.setOnPullToRefreshListener(this);
-        mAttacher.getHeaderTextView().setTextColor(Color.WHITE);
+        layout = (PullRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        layout.setRefreshStyle(PullRefreshLayout.STYLE_MATERIAL);
+        layout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Thread(OrderRunnable).start();
+            }
+        });
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.navdrawer);
@@ -382,7 +388,7 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
         };
         mDrawerLayout.setDrawerListener(mDrawerToggle);
         mDrawerToggle.syncState();
-        String[] values = new String[]{ "Sign out", "About" };
+        String[] values = new String[]{ "Sign out","Bug Report", "Share", "About" };
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, values);
         mDrawerList.setAdapter(adapter);
@@ -393,17 +399,22 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                 switch (position) {
                     case 0:
                         break;
-//                    Intent share = new Intent(Intent.ACTION_SEND);
-//                    share.setType("text/plain");
-//                    share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    share.putExtra(Intent.EXTRA_SUBJECT,
-//                            getString(R.string.app_name));
-//                    share.putExtra(Intent.EXTRA_TEXT, getString(R.string.app_description) + "\n" +
-//                            "GitHub Page : https://github.com/IkiMuhendis/LDrawer\n" +
-//                            "Sample App : https://play.google.com/store/apps/details?id=" +
-//                            getPackageName());
-//                    startActivity(Intent.createChooser(share,
-//                            getString(R.string.app_name)));
+                    case 1:
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hearsilent/XiaomiOrder/issues/new"));
+                        startActivity(browserIntent);
+                        break;
+                    case 2:
+                        Intent share = new Intent(Intent.ACTION_SEND);
+                        share.setType("text/plain");
+                        share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        share.putExtra(Intent.EXTRA_SUBJECT,
+                                getString(R.string.app_name));
+                        share.putExtra(Intent.EXTRA_TEXT, getString(R.string.app_description) + "\n" +
+                                "GitHub Page : https://github.com/hearsilent/XiaomiOrder");
+                        startActivity(Intent.createChooser(share,
+                                getString(R.string.app_name)));
+                        break;
+
                 }
             }
         });
@@ -412,7 +423,7 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
             @Override
             public boolean onChildClick(ExpandableListView parent, View v,
                                         int groupPosition, int childPosition, long id) {
-                if (mAttacher.isRefreshing())
+                if (layout.isRefreshing())
                     return true;
                 switch (childPosition)
                 {
@@ -420,6 +431,7 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                         if (OrderListAdapter.getChild(groupPosition, childPosition).title.length() != 9)
                         {
                             new AlertDialogPro.Builder(MainActivity.this)
+                                    .setIcon(R.drawable.ic_payment_white_48dp)
                                     .setTitle("繳費")
                                     .setSingleChoiceItems(new String[]{"7-11繳費", "全家繳費"},
                                             0,
@@ -442,6 +454,7 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                         break;
                     case 3:
                         new AlertDialogPro.Builder(MainActivity.this).setTitle("收件資料")
+                                .setIcon(R.drawable.ic_contacts_white_48dp)
                                 .setItems(Detail[groupPosition], null)
                                 .setPositiveButton("確定", null)
                                 .show();
@@ -449,6 +462,7 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                     case 4:
                         String[] NewOrderDetail = Arrays.copyOf(OrderDetail[groupPosition], OrderDetailCount[groupPosition][0]);
                         new AlertDialogPro.Builder(MainActivity.this).setTitle("訂單明細")
+                                .setIcon(R.drawable.ic_receipt_white_48dp)
                                 .setItems(NewOrderDetail, null)
                                 .setPositiveButton("確定",null)
                                 .show();
@@ -463,12 +477,12 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
                 // We call collapseGroupWithAnimation(int) and
                 // expandGroupWithAnimation(int) to animate group
-                // expansion/collapse.
-                if (OldPosition != -1)
-                    mList.collapseGroupWithAnimation(OldPosition);
-                OldPosition = groupPosition;
-                if (mAttacher.isRefreshing())
+                // expansion/
+                if (layout.isRefreshing())
                     return true;
+                if (OldPosition != -1 && OldPosition != groupPosition)
+                    mList.collapseGroup(OldPosition);
+                OldPosition = groupPosition;
                 if (mList.isGroupExpanded(groupPosition))
                     mList.collapseGroupWithAnimation(groupPosition);
                 else
@@ -476,11 +490,6 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                 return true;
             }
         });
-    }
-
-    @Override
-    public void onRefresh () {
-        new Thread(OrderRunnable).start();
     }
 
     String get_url_contents( String url , List<NameValuePair> params , CookieStore cookieStore ) {
@@ -558,7 +567,8 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
             switch (msg.what)
             {
                 case -1:
-                    mAttacher.setRefreshing();
+                    layout.setRefreshing(true);
+                    //mAttacher.setRefreshing();
                     break;
                 case 1:
                     OrderListAdapter = new ExampleAdapter(MainActivity.this);
@@ -566,7 +576,8 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                     mList.setAdapter(OrderListAdapter);
                     break;
                 case 2:
-                    mAttacher.setRefreshComplete();
+                    layout.setRefreshing(false);
+                    //mAttacher.setRefreshComplete();
                     break;
             }
         };
@@ -583,14 +594,10 @@ public class MainActivity extends Activity implements PullToRefreshView.OnPullTo
                    builder.setTitle("Error").
                            setMessage("帳號或密碼輸入錯誤 !").
                            setIcon(R.drawable.ic_error_red_48dp).
-                           setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                               @Override
-                               public void onClick(DialogInterface dialog, int which) {
-                                   SignInButton.setEnabled(true);
-                                   UserNameEditText.setEnabled(true);
-                                   PasswordEditText.setEnabled(true);
-                               }
-                           }).show();
+                           setPositiveButton("確定", null).show();
+                   SignInButton.setEnabled(true);
+                   UserNameEditText.setEnabled(true);
+                   PasswordEditText.setEnabled(true);
                    break;
                case 2:
                    NowLayout = "Order";

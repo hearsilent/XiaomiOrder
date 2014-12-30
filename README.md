@@ -7,11 +7,12 @@ Xiaomi Order
 - MaterialEditText (Material Design)
 - AlertDialogPro (Material Design)
 - RippleEffect (Material Design)
+- PullRefreshLayout (Material Design)
+- Material Design Icons (Material Design)
 - FlatUI
-- PullToRefresh
 - AnimatedExpandableListView
 - Order 
 
 ## 待開發功能:
 - Order (UI優化)
-- PullToRefresh (以baoyongzhang/android-PullRefreshLayout優化)
+- 繳費
