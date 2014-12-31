@@ -10,9 +10,6 @@
 [submodule "MaterialEditText"]
 	path = MaterialEditText
 	url = https://github.com/rengwuxian/MaterialEditText.git
-[submodule "LDrawer"]
-	path = LDrawer
-	url = https://github.com/ikimuhendis/LDrawer.git
 [submodule "RippleEffect"]
 	path = RippleEffect
 	url = https://github.com/traex/RippleEffect.git
