@@ -5,7 +5,7 @@ Xiaomi Order
 - Sign In
 - Order
 - 繳費
-- LDrawer (Material Design)
+- DrawerArrowDrawable (Material Design)
 - MaterialEditText (Material Design)
 - AlertDialogPro (Material Design)
 - RippleEffect (Material Design)

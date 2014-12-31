@@ -1,20 +1,19 @@
 package silent.miorder;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -22,14 +21,13 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.alertdialogpro.AlertDialogPro;
 import com.alertdialogpro.ProgressDialogPro;
 import com.cengalabs.flatui.views.FlatButton;
-import com.ikimuhendis.ldrawer.ActionBarDrawerToggle;
-import com.ikimuhendis.ldrawer.DrawerArrowDrawable;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import org.apache.http.HttpEntity;
@@ -63,6 +61,8 @@ import java.util.List;
 import silent.pullrefreshlayout.PullRefreshLayout;
 import us.codecraft.xsoup.Xsoup;
 
+import static android.view.Gravity.START;
+
 public class MainActivity extends Activity {
     public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0";
 
@@ -77,8 +77,6 @@ public class MainActivity extends Activity {
 
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
-    private ActionBarDrawerToggle mDrawerToggle;
-    private DrawerArrowDrawable drawerArrow;
 
     private MaterialEditText UserNameEditText;
     private MaterialEditText PasswordEditText;
@@ -106,6 +104,10 @@ public class MainActivity extends Activity {
     String NowLayout = "Main";
 
     PullRefreshLayout layout;
+
+    private DrawerArrowDrawable drawerArrowDrawable;
+    private float offset;
+    private boolean flipped;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,6 +131,8 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 try {
+                    Thread.sleep(800);
+                    LoginHandler.sendEmptyMessage(-1);
                     List<NameValuePair> params = new LinkedList<>();
                     params.add(new BasicNameValuePair("user", UserNameEditText.getText().toString()));
                     params.add(new BasicNameValuePair("_json", "true"));
@@ -280,7 +284,7 @@ public class MainActivity extends Activity {
             }
         };
 
-        LoadingDialog = new ProgressDialogPro(this);
+        LoadingDialog = new ProgressDialogPro(this, R.style.Theme_AlertDialogPro_Material);
     }
     private static class GroupItem {
         String title;
@@ -391,12 +395,6 @@ public class MainActivity extends Activity {
                 SignInButton.setEnabled(false);
                 UserNameEditText.setEnabled(false);
                 PasswordEditText.setEnabled(false);
-                LoadingDialog.setMessage("Loading...");
-                ((ProgressDialogPro) LoadingDialog).setIndeterminate(true);
-                ((ProgressDialogPro) LoadingDialog).setProgressStyle(ProgressDialogPro.STYLE_SPINNER);
-                LoadingDialog.setCancelable(false);
-                LoadingDialog.setCanceledOnTouchOutside(false);
-                LoadingDialog.show();
             }
         });
 
@@ -405,10 +403,6 @@ public class MainActivity extends Activity {
 
     void InitOrder()
     {
-        ActionBar ab = getActionBar();
-        ab.setDisplayHomeAsUpEnabled(true);
-        ab.setHomeButtonEnabled(true);
-
         mList = (AnimatedExpandableListView) super.findViewById(R.id.OrderList);
         layout = (PullRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         layout.setRefreshStyle(PullRefreshLayout.STYLE_MATERIAL);
@@ -419,37 +413,24 @@ public class MainActivity extends Activity {
             }
         });
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.navdrawer);
-        drawerArrow = new DrawerArrowDrawable(this) {
-            @Override
-            public boolean isLayoutRtl() {
-                return false;
-            }
-        };
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                drawerArrow, R.string.drawer_open,
-                R.string.drawer_close) {
-            public void onDrawerClosed(View view) {
-                super.onDrawerClosed(view);
-                invalidateOptionsMenu();
-            }
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                invalidateOptionsMenu();
-            }
-        };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-        mDrawerToggle.syncState();
+        mDrawerList = (ListView)findViewById(R.id.drawerlistView);
         String[] values = new String[]{ "Sign out","Bug Report", "Share", "About" };
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, values);
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(
+                this,android.R.layout.simple_list_item_1, values){
+            @Override
+            public View getView(int position, View convertView,
+                                ViewGroup parent) {
+                View view =super.getView(position, convertView, parent);
+                TextView textView=(TextView) view.findViewById(android.R.id.text1);
+                textView.setTextColor(Color.BLACK);
+                return view;
+            }
+        };
         mDrawerList.setAdapter(adapter);
         mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-                switch (position) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                 switch (position) {
                     case 0:
                         break;
                     case 1:
@@ -467,7 +448,36 @@ public class MainActivity extends Activity {
                         startActivity(Intent.createChooser(share,
                                 getString(R.string.app_name)));
                         break;
+                }
+            }
+        });
 
+        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        final ImageView imageView = (ImageView) findViewById(R.id.drawer_indicator);
+        final Resources resources = getResources();
+        drawerArrowDrawable = new DrawerArrowDrawable(resources);
+        drawerArrowDrawable.setStrokeColor(Color.WHITE);
+        imageView.setImageDrawable(drawerArrowDrawable);
+        drawer.setDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override public void onDrawerSlide(View drawerView, float slideOffset) {
+                offset = slideOffset;
+                // Sometimes slideOffset ends up so close to but not quite 1 or 0.
+                if (slideOffset >= .995) {
+                    flipped = true;
+                    drawerArrowDrawable.setFlip(flipped);
+                } else if (slideOffset <= .005) {
+                    flipped = false;
+                    drawerArrowDrawable.setFlip(flipped);
+                }
+                drawerArrowDrawable.setParameter(offset);
+            }
+        });
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (drawer.isDrawerVisible(START)) {
+                    drawer.closeDrawer(START);
+                } else {
+                    drawer.openDrawer(START);
                 }
             }
         });
@@ -737,6 +747,15 @@ public class MainActivity extends Activity {
         public void handleMessage(android.os.Message msg) {
            switch (msg.what)
            {
+               case -1:
+                   LoadingDialog.setMessage("Loading...");
+                   ProgressDialogPro progressDialog = (ProgressDialogPro) LoadingDialog;
+                   progressDialog.setProgressStyle(ProgressDialogPro.STYLE_SPINNER);
+                   progressDialog.setIndeterminate(true);
+                   LoadingDialog.setCancelable(false);
+                   LoadingDialog.setCanceledOnTouchOutside(false);
+                   LoadingDialog.show();
+                   break;
                case 1:
                    LoadingDialog.dismiss();
                    AlertDialogPro.Builder builder = new AlertDialogPro.Builder(MainActivity.this);
@@ -770,29 +789,5 @@ public class MainActivity extends Activity {
                 .putString("User", UserNameEditText.getText().toString())
                 .putString("Pwd", PasswordEditText.getText().toString())
                 .apply();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
-                mDrawerLayout.closeDrawer(mDrawerList);
-            } else {
-                mDrawerLayout.openDrawer(mDrawerList);
-            }
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        if (NowLayout.equals("Order"))
-            mDrawerToggle.syncState();
-    }
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (NowLayout.equals("Order"))
-            mDrawerToggle.onConfigurationChanged(newConfig);
     }
 }

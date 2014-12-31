@@ -4,6 +4,7 @@
     <color name="blue">#FF375BF1</color>
     <color name="yellow">#FFF7D23E</color>
     <color name="green">#FF34A350</color>
+    <color name="white">#ffffff</color>
     <color name="actionbar_color">#bf360c</color>
     <color name="drawer_arrow_second_color">#303f9f</color>
 </resources>

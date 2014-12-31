@@ -25,3 +25,6 @@
 [submodule "MaterialDesignIcons"]
 	path = MaterialDesignIcons
 	url = https://github.com/google/material-design-icons.git
+[submodule "DrawerArrowDrawable"]
+	path = DrawerArrowDrawable
+	url = https://github.com/ChrisRenke/DrawerArrowDrawable.git

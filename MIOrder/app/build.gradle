@@ -9,7 +9,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 21
         versionCode 1
-        versionName "1.1"
+        versionName "1.2"
     }
     buildTypes {
         release {
@@ -24,7 +24,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'org.jsoup:jsoup:1.8.1'
     compile 'us.codecraft:xsoup:0.3.0'
-    compile 'com.ikimuhendis:ldrawer:0.1'
     compile 'com.rengwuxian.materialedittext:library:1.7.1'
     compile 'com.github.eluleci:flatui:3.0.0'
     compile 'com.github.traex.rippleeffect:library:1.2.3'
