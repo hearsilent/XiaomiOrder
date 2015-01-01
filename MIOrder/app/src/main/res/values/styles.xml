@@ -21,4 +21,19 @@
     <style name="AdpNormalButtonStyle" parent="Widget.AlertDialogPro.Material.Button">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
+
+    <style name="BottomSheet.StyleDialog" parent="BottomSheet.Dialog">
+        <item name="android:backgroundDimAmount">0.5</item>
+        <item name="android:windowAnimationStyle">@style/BottomSheet.Animation</item>
+        <item name="android:textColorPrimary">#ff000000</item>
+        <item name="android:textColorSecondary">#8f000000</item>
+        <item name="android:textColorHint">#6f000000</item>
+        <item name="bs_dialogBackground">@android:color/background_light</item>
+        <item name="bs_dividerColor">#1f000000</item>
+        <item name="bs_numColumns">3</item>
+        <item name="bs_listStyle">@style/BottomSheet.StyleList</item>
+    </style>
+    <style name="BottomSheet.StyleList" parent="Theme.AppCompat">
+        <item name="bottomSheetStyle">@style/BottomSheet.StyleDialog</item>
+    </style>
 </resources>

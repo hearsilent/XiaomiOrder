@@ -13,6 +13,8 @@ Xiaomi Order
 - Material Design Icons (Material Design)
 - FlatUI
 - AnimatedExpandableListView
+- Titanic for Android
+- BottomSheet
 
 ## 待開發功能:
 - Order (UI優化)

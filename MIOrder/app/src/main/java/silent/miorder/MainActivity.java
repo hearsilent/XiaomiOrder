@@ -2,10 +2,15 @@ package silent.miorder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
@@ -28,6 +33,7 @@ import android.widget.TextView;
 import com.alertdialogpro.AlertDialogPro;
 import com.alertdialogpro.ProgressDialogPro;
 import com.cengalabs.flatui.views.FlatButton;
+import com.cocosw.bottomsheet.BottomSheet;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import org.apache.http.HttpEntity;
@@ -59,6 +65,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import silent.pullrefreshlayout.PullRefreshLayout;
+import silent.titanic.Titanic;
+import silent.titanic.TitanicTextView;
+import silent.titanic.Typefaces;
 import us.codecraft.xsoup.Xsoup;
 
 import static android.view.Gravity.START;
@@ -108,6 +117,7 @@ public class MainActivity extends Activity {
     private DrawerArrowDrawable drawerArrowDrawable;
     private float offset;
     private boolean flipped;
+    private ImageView githubImage;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -124,14 +134,18 @@ public class MainActivity extends Activity {
             InitOrder();
             new Thread(OrderRunnable).start();
         }
-
+        else if (NowLayout.equals("About"))
+        {
+            setContentView(R.layout.activity_about);
+            InitAbout();
+        }
 
 
         LoginRunnable = new Runnable() {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(800);
+                    Thread.sleep(500);
                     LoginHandler.sendEmptyMessage(-1);
                     List<NameValuePair> params = new LinkedList<>();
                     params.add(new BasicNameValuePair("user", UserNameEditText.getText().toString()));
@@ -224,11 +238,15 @@ public class MainActivity extends Activity {
                     OrderDetailCount = new int[OrderItemCount][1];
                     for (String PageUrl : PageList)
                     {
+                        if (!NowLayout.equals("Order"))
+                            break;
                         if (!PageUrl.equals(_orderUrl))
                             document = Jsoup.parse(get_url_contents(PageUrl, null, cookieStore));
                         List<String> list = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div/div/ul/li").evaluate(document).list();
                         for (int i = 1; i <= list.size(); i++)
                         {
+                            if (!NowLayout.equals("Order"))
+                                break;
                             if (Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div/div/ul/li[" + i + "]/table/thead/tr/th/div/span[1]/a").evaluate(document).get() == null)
                                 continue;
                             _Xiaomi = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div/div/ul/li[" + i + "]/table/thead/tr/th/div/span[1]/a").evaluate(document).getElements().text();
@@ -336,6 +354,16 @@ public class MainActivity extends Activity {
             }
             holder.title.setText(item.title);
             holder.hint.setText(item.hint);
+            if (item.hint == null)
+            {
+                holder.title.setHeight(92);
+                holder.hint.setTextSize(0);
+            }
+            else
+            {
+                holder.title.setHeight(47);
+                holder.hint.setTextSize(13);
+            }
             return convertView;
         }
         @Override
@@ -379,6 +407,31 @@ public class MainActivity extends Activity {
         }
     }
 
+    private BottomSheet.Builder getShareActions(BottomSheet.Builder builder, String text) {
+        PackageManager pm = this.getPackageManager();
+        final Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        final List<ResolveInfo> list = pm.queryIntentActivities(shareIntent, 0);
+        for (int i = 0; i < list.size(); i++) {
+            builder.sheet(i,list.get(i).loadIcon(pm),list.get(i).loadLabel(pm));
+        }
+        builder.listener(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ActivityInfo activity = list.get(which).activityInfo;
+                ComponentName name = new ComponentName(activity.applicationInfo.packageName,
+                        activity.name);
+                Intent newIntent = (Intent) shareIntent.clone();
+                newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                newIntent.setComponent(name);
+                startActivity(newIntent);
+            }
+        });
+        return builder;
+    }
+
     void InitMain()
     {
         SignInButton = (FlatButton) findViewById(R.id.SignIn);
@@ -399,6 +452,95 @@ public class MainActivity extends Activity {
         });
 
         restorePrefs();
+    }
+
+    void InitAbout()
+    {
+        TitanicTextView tv = (TitanicTextView) findViewById(R.id.my_text_view);
+        // set fancy typeface
+        tv.setTypeface(Typefaces.get(this, "Satisfy-Regular.ttf"));
+        // start animation
+        new Titanic().start(tv);
+        githubImage = (ImageView) findViewById(R.id.imageView);
+        githubImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hearsilent/XiaomiOrder"));
+                startActivity(browserIntent);
+            }
+        });
+
+        mDrawerList = (ListView)findViewById(R.id.drawerlistView);
+        String[] values = new String[]{ "Order", "Sign out","Bug Report", "Share" };
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(
+                this,android.R.layout.simple_list_item_1, values){
+            @Override
+            public View getView(int position, View convertView,
+                                ViewGroup parent) {
+                View view =super.getView(position, convertView, parent);
+                TextView textView=(TextView) view.findViewById(android.R.id.text1);
+                textView.setTextColor(Color.BLACK);
+                return view;
+            }
+        };
+        mDrawerList.setAdapter(adapter);
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        setContentView(R.layout.activity_order);
+                        NowLayout = "Order";
+                        onCreate(null);
+                        break;
+                    case 1:
+                        get_url_contents("http://buy.mi.com/tw/site/logout", null, cookieStore);
+                        NowLayout = "Main";
+                        setContentView(R.layout.activity_main);
+                        onCreate(null);
+                        break;
+                    case 2:
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hearsilent/XiaomiOrder/issues/new"));
+                        startActivity(browserIntent);
+                        break;
+                    case 3:
+                        getShareActions(new BottomSheet.Builder(MainActivity.this, R.style.BottomSheet_StyleDialog).grid().title("Share"),getString(R.string.app_description) + "\n" +
+                                "GitHub Page : https://github.com/hearsilent/XiaomiOrder").build().show();
+                        break;
+                }
+            }
+        });
+
+        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        final ImageView imageView = (ImageView) findViewById(R.id.drawer_indicator);
+        final Resources resources = getResources();
+        drawerArrowDrawable = new DrawerArrowDrawable(resources);
+        drawerArrowDrawable.setStrokeColor(Color.WHITE);
+        imageView.setImageDrawable(drawerArrowDrawable);
+        drawer.setDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override public void onDrawerSlide(View drawerView, float slideOffset) {
+                offset = slideOffset;
+                // Sometimes slideOffset ends up so close to but not quite 1 or 0.
+                if (slideOffset >= .995) {
+                    flipped = true;
+                    drawerArrowDrawable.setFlip(flipped);
+                } else if (slideOffset <= .005) {
+                    flipped = false;
+                    drawerArrowDrawable.setFlip(flipped);
+                }
+                drawerArrowDrawable.setParameter(offset);
+            }
+        });
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (drawer.isDrawerVisible(START)) {
+                    drawer.closeDrawer(START);
+                } else {
+                    drawer.openDrawer(START);
+                }
+            }
+        });
+
     }
 
     void InitOrder()
@@ -432,22 +574,24 @@ public class MainActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                  switch (position) {
                     case 0:
+                        get_url_contents("http://buy.mi.com/tw/site/logout", null, cookieStore);
+                        NowLayout = "Main";
+                        setContentView(R.layout.activity_main);
+                        onCreate(null);
                         break;
                     case 1:
                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hearsilent/XiaomiOrder/issues/new"));
                         startActivity(browserIntent);
                         break;
                     case 2:
-                        Intent share = new Intent(Intent.ACTION_SEND);
-                        share.setType("text/plain");
-                        share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        share.putExtra(Intent.EXTRA_SUBJECT,
-                                getString(R.string.app_name));
-                        share.putExtra(Intent.EXTRA_TEXT, getString(R.string.app_description) + "\n" +
-                                "GitHub Page : https://github.com/hearsilent/XiaomiOrder");
-                        startActivity(Intent.createChooser(share,
-                                getString(R.string.app_name)));
+                        getShareActions(new BottomSheet.Builder(MainActivity.this, R.style.BottomSheet_StyleDialog).grid().title("Share"),getString(R.string.app_description) + "\n" +
+                                "GitHub Page : https://github.com/hearsilent/XiaomiOrder").build().show();
                         break;
+                     case 3:
+                         setContentView(R.layout.activity_about);
+                         NowLayout = "About";
+                         onCreate(null);
+                         break;
                 }
             }
         });
@@ -789,5 +933,17 @@ public class MainActivity extends Activity {
                 .putString("User", UserNameEditText.getText().toString())
                 .putString("Pwd", PasswordEditText.getText().toString())
                 .apply();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // 什麼都不用寫
+        }
+        else {
+            // 什麼都不用寫
+        }
     }
 }

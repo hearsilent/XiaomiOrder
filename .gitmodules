@@ -28,3 +28,9 @@
 [submodule "DrawerArrowDrawable"]
 	path = DrawerArrowDrawable
 	url = https://github.com/ChrisRenke/DrawerArrowDrawable.git
+[submodule "BottomSheet"]
+	path = BottomSheet
+	url = https://github.com/soarcn/BottomSheet.git
+[submodule "Titanic"]
+	path = Titanic
+	url = https://github.com/RomainPiel/Titanic.git

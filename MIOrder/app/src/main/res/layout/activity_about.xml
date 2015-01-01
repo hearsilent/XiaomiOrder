@@ -49,24 +49,45 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         >
-        <silent.pullrefreshlayout.PullRefreshLayout
-            android:id="@+id/swipeRefreshLayout"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
-            <RelativeLayout
+            <silent.titanic.TitanicTextView
+                android:id="@+id/my_text_view"
+                android:text="HearSilent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="#212121"
+                android:textSize="70sp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginTop="57dp" />
 
-                <silent.miorder.AnimatedExpandableListView
-                    android:id="@+id/OrderList"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true" />
-            </RelativeLayout>
-        </silent.pullrefreshlayout.PullRefreshLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/imageView"
+                android:src="@drawable/github"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Contact"
+                android:id="@+id/textView"
+                android:layout_above="@+id/imageView"
+                android:layout_centerHorizontal="true"
+                android:textSize="25sp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
 
         <ListView
             android:layout_width="240dp"

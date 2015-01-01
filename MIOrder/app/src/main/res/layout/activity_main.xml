@@ -23,7 +23,7 @@
             android:gravity="center"
             android:background="@drawable/drawer_selector"
             android:layout_gravity="left|center_vertical"
-            android:textColor="#ffffffff"
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:layout_marginLeft="5dp"/>
     </FrameLayout>
@@ -43,8 +43,8 @@
             android:layout_alignRight="@+id/Password"
             android:layout_alignEnd="@+id/Password"
             android:hint="UserName"
-            app:baseColor="#0056d3"
-            app:primaryColor="#bf360c"
+            app:baseColor="@color/blue"
+            app:primaryColor="@color/actionbar_color"
             app:floatingLabel="highlight"
             app:singleLineEllipsis="true"
             android:textSize="18sp" />
@@ -58,8 +58,8 @@
             android:layout_below="@+id/UserName"
             android:layout_centerHorizontal="true"
             android:hint="Password"
-            app:baseColor="#0056d3"
-            app:primaryColor="#bf360c"
+            app:baseColor="@color/blue"
+            app:primaryColor="@color/actionbar_color"
             app:floatingLabel="highlight"
             app:singleLineEllipsis="true"
             android:textSize="18sp" />
@@ -73,6 +73,7 @@
             android:layout_alignRight="@+id/Password"
             android:layout_alignEnd="@+id/Password"
             android:layout_alignParentTop="false"
+            ripple:rv_rippleDuration="300"
             android:gravity="center">
 
             <com.cengalabs.flatui.views.FlatButton
@@ -81,7 +82,6 @@
                 android:id="@+id/SignIn"
                 android:layout_below="@+id/Password"
                 android:textSize="20sp"
-
                 android:text="Sign In"
                 flatui:fl_textAppearance="fl_light"
                 flatui:fl_blockButtonEffectHeight="3dp"

@@ -111,7 +111,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
      */
     public void setAdapter(ExpandableListAdapter adapter) {
         super.setAdapter(adapter);
-// Make sure that the adapter extends AnimatedExpandableListAdapter
+        // Make sure that the adapter extends AnimatedExpandableListAdapter
         if(adapter instanceof AnimatedExpandableListAdapter) {
             this.adapter = (AnimatedExpandableListAdapter) adapter;
             this.adapter.setParent(this);
@@ -135,24 +135,24 @@ public class AnimatedExpandableListView extends ExpandableListView {
         if (groupFlatPos != -1) {
             int childIndex = groupFlatPos - getFirstVisiblePosition();
             if (childIndex < getChildCount()) {
-// Get the view for the group is it is on screen...
+                // Get the view for the group is it is on screen...
                 View v = getChildAt(childIndex);
                 if (v.getBottom() >= getBottom()) {
-// If the user is not going to be able to see the animation
-// we just expand the group without an animation.
-// This resolves the case where getChildView will not be
-// called if the children of the group is not on screen
-// We need to notify the adapter that the group was expanded
-// without it's knowledge
+                    // If the user is not going to be able to see the animation
+                    // we just expand the group without an animation.
+                    // This resolves the case where getChildView will not be
+                    // called if the children of the group is not on screen
+                    // We need to notify the adapter that the group was expanded
+                    // without it's knowledge
                     adapter.notifyGroupExpanded(groupPos);
                     return expandGroup(groupPos);
                 }
             }
         }
-// Let the adapter know that we are starting the animation...
+        // Let the adapter know that we are starting the animation...
         adapter.startExpandAnimation(groupPos, 0);
-// Finally call expandGroup (note that expandGroup will call
-// notifyDataSetChanged so we don't need to)
+        // Finally call expandGroup (note that expandGroup will call
+        // notifyDataSetChanged so we don't need to)
         return expandGroup(groupPos);
     }
     /**
@@ -166,34 +166,34 @@ public class AnimatedExpandableListView extends ExpandableListView {
         if (groupFlatPos != -1) {
             int childIndex = groupFlatPos - getFirstVisiblePosition();
             if (childIndex >= 0 && childIndex < getChildCount()) {
-// Get the view for the group is it is on screen...
+                // Get the view for the group is it is on screen...
                 View v = getChildAt(childIndex);
                 if (v.getBottom() >= getBottom()) {
-// If the user is not going to be able to see the animation
-// we just collapse the group without an animation.
-// This resolves the case where getChildView will not be
-// called if the children of the group is not on screen
+                    // If the user is not going to be able to see the animation
+                    // we just collapse the group without an animation.
+                    // This resolves the case where getChildView will not be
+                    // called if the children of the group is not on screen
                     return collapseGroup(groupPos);
                 }
             } else {
-// If the group is offscreen, we can just collapse it without an
-// animation...
+                // If the group is offscreen, we can just collapse it without an
+                // animation...
                 return collapseGroup(groupPos);
             }
         }
-// Get the position of the firstChild visible from the top of the screen
+        // Get the position of the firstChild visible from the top of the screen
         long packedPos = getExpandableListPosition(getFirstVisiblePosition());
         int firstChildPos = getPackedPositionChild(packedPos);
         int firstGroupPos = getPackedPositionGroup(packedPos);
-// If the first visible view on the screen is a child view AND it's a
-// child of the group we are trying to collapse, then set that
-// as the first child position of the group... see
-// {@link #startCollapseAnimation(int, int)} for why this is necessary
+        // If the first visible view on the screen is a child view AND it's a
+        // child of the group we are trying to collapse, then set that
+        // as the first child position of the group... see
+        // {@link #startCollapseAnimation(int, int)} for why this is necessary
         firstChildPos = firstChildPos == -1 || firstGroupPos != groupPos ? 0 : firstChildPos;
-// Let the adapter know that we are going to start animating the
-// collapse animation.
+        // Let the adapter know that we are going to start animating the
+        // collapse animation.
         adapter.startCollapseAnimation(groupPos, firstChildPos);
-// Force the listview to refresh it's views
+        // Force the listview to refresh it's views
         adapter.notifyDataSetChanged();
         return isGroupExpanded(groupPos);
     }
@@ -272,13 +272,13 @@ public class AnimatedExpandableListView extends ExpandableListView {
         public final int getChildType(int groupPosition, int childPosition) {
             GroupInfo info = getGroupInfo(groupPosition);
             if (info.animating) {
-// If we are animating this group, then all of it's children
-// are going to be dummy views which we will say is type 0.
+                // If we are animating this group, then all of it's children
+                // are going to be dummy views which we will say is type 0.
                 return 0;
             } else {
-// If we are not animating this group, then we will add 1 to
-// the type it has so that no type id conflicts will occur
-// unless getRealChildType() returns MAX_INT
+                // If we are not animating this group, then we will add 1 to
+                // the type it has so that no type id conflicts will occur
+                // unless getRealChildType() returns MAX_INT
                 return getRealChildType(groupPosition, childPosition) + 1;
             }
         }
@@ -287,7 +287,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
          */
         @Override
         public final int getChildTypeCount() {
-// Return 1 more than the childTypeCount to account for DummyView
+            // Return 1 more than the childTypeCount to account for DummyView
             return getRealChildTypeCount() + 1;
         }
         protected ViewGroup.LayoutParams generateDefaultLayoutParams() {
@@ -301,41 +301,41 @@ public class AnimatedExpandableListView extends ExpandableListView {
         public final View getChildView(final int groupPosition, int childPosition, boolean isLastChild, View convertView, final ViewGroup parent) {
             final GroupInfo info = getGroupInfo(groupPosition);
             if (info.animating) {
-// If this group is animating, return the a DummyView...
+                // If this group is animating, return the a DummyView...
                 if (convertView instanceof DummyView == false) {
                     convertView = new DummyView(parent.getContext());
                     convertView.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, 0));
                 }
                 if (childPosition < info.firstChildPosition) {
-// The reason why we do this is to support the collapse
-// this group when the group view is not visible but the
-// children of this group are. When notifyDataSetChanged
-// is called, the ExpandableListView tries to keep the
-// list position the same by saving the first visible item
-// and jumping back to that item after the views have been
-// refreshed. Now the problem is, if a group has 2 items
-// and the first visible item is the 2nd child of the group
-// and this group is collapsed, then the dummy view will be
-// used for the group. But now the group only has 1 item
-// which is the dummy view, thus when the ListView is trying
-// to restore the scroll position, it will try to jump to
-// the second item of the group. But this group no longer
-// has a second item, so it is forced to jump to the next
-// group. This will cause a very ugly visual glitch. So
-// the way that we counteract this is by creating as many
-// dummy views as we need to maintain the scroll position
-// of the ListView after notifyDataSetChanged has been
-// called.
+                    // The reason why we do this is to support the collapse
+                    // this group when the group view is not visible but the
+                    // children of this group are. When notifyDataSetChanged
+                    // is called, the ExpandableListView tries to keep the
+                    // list position the same by saving the first visible item
+                    // and jumping back to that item after the views have been
+                    // refreshed. Now the problem is, if a group has 2 items
+                    // and the first visible item is the 2nd child of the group
+                    // and this group is collapsed, then the dummy view will be
+                    // used for the group. But now the group only has 1 item
+                    // which is the dummy view, thus when the ListView is trying
+                    // to restore the scroll position, it will try to jump to
+                    // the second item of the group. But this group no longer
+                    // has a second item, so it is forced to jump to the next
+                    // group. This will cause a very ugly visual glitch. So
+                    // the way that we counteract this is by creating as many
+                    // dummy views as we need to maintain the scroll position
+                    // of the ListView after notifyDataSetChanged has been
+                    // called.
                     convertView.getLayoutParams().height = 0;
                     return convertView;
                 }
                 final ExpandableListView listView = (ExpandableListView) parent;
                 final DummyView dummyView = (DummyView) convertView;
-// Clear the views that the dummy view draws.
+                // Clear the views that the dummy view draws.
                 dummyView.clearViews();
-// Set the style of the divider
+                // Set the style of the divider
                 dummyView.setDivider(listView.getDivider(), parent.getMeasuredWidth(), listView.getDividerHeight());
-// Make measure specs to measure child views
+                // Make measure specs to measure child views
                 final int measureSpecW = MeasureSpec.makeMeasureSpec(parent.getWidth(), MeasureSpec.EXACTLY);
                 final int measureSpecH = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
                 int totalHeight = 0;
@@ -358,13 +358,13 @@ public class AnimatedExpandableListView extends ExpandableListView {
                     childView.measure(measureSpecW, childHeightSpec);
                     totalHeight += childView.getMeasuredHeight();
                     if (totalHeight < clipHeight) {
-// we only need to draw enough views to fool the user...
+                        // we only need to draw enough views to fool the user...
                         dummyView.addFakeView(childView);
                     } else {
                         dummyView.addFakeView(childView);
-// if this group has too many views, we don't want to
-// calculate the height of everything... just do a light
-// approximation and break
+                        // if this group has too many views, we don't want to
+                        // calculate the height of everything... just do a light
+                        // approximation and break
                         int averageHeight = totalHeight / (i + 1);
                         totalHeight += (len - i - 1) * averageHeight;
                         break;
