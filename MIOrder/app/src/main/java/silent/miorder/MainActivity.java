@@ -26,7 +26,9 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -64,6 +66,12 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import silent.animatedexpandablelistView.AnimatedExpandableListView;
+import silent.animatedexpandablelistView.ExpandableListViewChildItem;
+import silent.animatedexpandablelistView.ExpandableListViewGroupItem;
+import silent.drawerarrowdrawable.DrawerArrowDrawable;
+import silent.observablescrollView.ObservableScrollViewCallbacks;
+import silent.observablescrollView.ScrollState;
 import silent.pullrefreshlayout.PullRefreshLayout;
 import silent.titanic.Titanic;
 import silent.titanic.TitanicTextView;
@@ -72,7 +80,7 @@ import us.codecraft.xsoup.Xsoup;
 
 import static android.view.Gravity.START;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ObservableScrollViewCallbacks {
     public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0";
 
     String _loginPassportUrl = "https://account.xiaomi.com/pass/serviceLoginAuth2";
@@ -95,6 +103,8 @@ public class MainActivity extends Activity {
     Runnable LoginRunnable;
     Runnable PinCodeRunnable;
     Runnable CancelRunnable;
+    Runnable HeaderRunnable1;
+    Runnable HeaderRunnable2;
 
     private String _bank = "seven_eleven";
     private String _OrderId = "";
@@ -104,11 +114,12 @@ public class MainActivity extends Activity {
 
     private AnimatedExpandableListView mList;
     private ExampleAdapter OrderListAdapter;
-
+    private boolean _OrderListViewIsEnd = false;
+    private List<ExpandableListViewGroupItem> items = new ArrayList<>();
     String[][] Detail = new String[][]{};
     int[][] OrderDetailCount = new int[][]{};
     String[][] OrderDetail = new String[][]{};
-    List<GroupItem> items = new ArrayList<>();
+
     int OldPosition = -1;
     String NowLayout = "Main";
 
@@ -182,7 +193,7 @@ public class MainActivity extends Activity {
                 try {
                     List<NameValuePair> params = new LinkedList<>();
                     params.add(new BasicNameValuePair("bank", _bank));
-                    Document document = Jsoup.parse( post_url_contents(_confirmOrder + _OrderId + "#", params, cookieStore) );
+                    Document document = Jsoup.parse( post_url_contents(_confirmOrder + _OrderId, params, cookieStore) );
                     Message message = Message.obtain();
                     message.obj = Xsoup.compile("/html/body/div[3]/div/div[2]/div/div[1]/ul/li[2]").evaluate(document).getElements().text();
                     message.what = 1;
@@ -215,11 +226,10 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     OrderHandler.sendEmptyMessage(-1);
-
                     items.clear();
                     OrderHandler.sendEmptyMessage(1);
 
-                    String _Payment = null, _Tcat = "", _Status = null, _Xiaomi = null;
+                    String _Payment = null, _Tcat = "尚未出貨", _Status = null, _Xiaomi = null;
                     int OrderItemCount = 0, OrderItemCounter = -1;
                     ArrayList<String> PageList = new ArrayList<>();
                     PageList.add(_orderUrl);
@@ -266,31 +276,9 @@ public class MainActivity extends Activity {
                             }
                             _Payment = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[3]/div/span/span").evaluate(documentx).getElements().text();
                             _Status = Xsoup.compile("/html/body/div[4]/div/div/div[2]/div/div[2]/div[1]/table/tbody/tr[1]/td[4]/div/span").evaluate(documentx).getElements().text();
-                            GroupItem item = new GroupItem();
 
-                            item.title = "訂單號：" + _Xiaomi;
-                            ChildItem child = new ChildItem();
-                            child.title = "目前狀態：" + _Status;
-                            if (_Status.length() == 4)
-                                child.hint = "點擊繳費";
-                            item.items.add(child);
-                            child = new ChildItem();
-                            child.title = "金額：" + _Payment + "元";
-                            item.items.add(child);
-                            child = new ChildItem();
-                            child.title = "運輸單號：" + _Tcat;
-                            item.items.add(child);
-                            child = new ChildItem();
-                            child.title = "收件資料";
-                            child.hint = "點擊查看";
-                            item.items.add(child);
-                            child = new ChildItem();
-                            child.title = "訂單明細";
-                            child.hint = "點擊查看";
-                            item.items.add(child);
-                            items.add(item);
-
-                            _Tcat = "";
+                            items.add(new ExpandableListViewGroupItem(_Xiaomi, _Status, _Payment, _Tcat));
+                            _Tcat = "尚未出貨";
                             OrderHandler.sendEmptyMessage(1);
                         }
                     }
@@ -302,19 +290,76 @@ public class MainActivity extends Activity {
             }
         };
 
+        HeaderRunnable1 = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i >= -112; i--)
+                    {
+                        Thread.sleep(1);
+                        HeaderHandler.sendEmptyMessage(i);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        HeaderRunnable2 = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = -122; i <= 0; i++)
+                    {
+                        Thread.sleep(1);
+                        HeaderHandler.sendEmptyMessage(i);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
         LoadingDialog = new ProgressDialogPro(this, R.style.Theme_AlertDialogPro_Material);
     }
+
+    @Override
+    public void onDownMotionEvent() {
+
+    }
+
+    @Override
+    public void onUpOrCancelMotionEvent(ScrollState scrollState) {
+        if (!NowLayout.equals("Order"))
+            return;
+
+        final FrameLayout actionBar = (FrameLayout)findViewById(R.id.action_bar);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) actionBar.getLayoutParams();
+        if (scrollState == ScrollState.UP) {
+            if (params.topMargin == 0 && !_OrderListViewIsEnd)
+                new Thread(HeaderRunnable1).start();
+        } else if (scrollState == ScrollState.DOWN) {
+            if (params.topMargin == -112 && !_OrderListViewIsEnd)
+                new Thread(HeaderRunnable2).start();
+        }
+    }
+
+    @Override
+    public void onScrollChanged(int scrollY, boolean firstScroll, boolean dragging) {
+
+    }
+
     private static class GroupItem {
         String title;
-        List<ChildItem> items = new ArrayList<ChildItem>();
+        ExpandableListViewChildItem item;
     }
     private static class ChildItem {
-        String title;
-        String hint;
+        String price;
+        String tcat;
     }
     private static class ChildHolder {
-        TextView title;
-        TextView hint;
+        TextView price;
+        TextView tcat;
     }
     private static class GroupHolder {
         TextView title;
@@ -324,16 +369,16 @@ public class MainActivity extends Activity {
      */
     private class ExampleAdapter extends AnimatedExpandableListView.AnimatedExpandableListAdapter {
         private LayoutInflater inflater;
-        private List<GroupItem> items;
+        private List<ExpandableListViewGroupItem> items;
         public ExampleAdapter(Context context) {
             inflater = LayoutInflater.from(context);
         }
-        public void setData(List<GroupItem> items) {
+        public void setData(List<ExpandableListViewGroupItem> items) {
             this.items = items;
         }
         @Override
-        public ChildItem getChild(int groupPosition, int childPosition) {
-            return items.get(groupPosition).items.get(childPosition);
+        public ExpandableListViewChildItem getChild(int groupPosition, int childPosition) {
+            return items.get(groupPosition).getChild();
         }
         @Override
         public long getChildId(int groupPosition, int childPosition) {
@@ -342,36 +387,26 @@ public class MainActivity extends Activity {
         @Override
         public View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
             ChildHolder holder;
-            ChildItem item = getChild(groupPosition, childPosition);
+            ExpandableListViewChildItem item = getChild(groupPosition, childPosition);
             if (convertView == null) {
                 holder = new ChildHolder();
-                convertView = inflater.inflate(R.layout.list_item, parent, false);
-                holder.title = (TextView) convertView.findViewById(R.id.textTitle);
-                holder.hint = (TextView) convertView.findViewById(R.id.textHint);
+                convertView = inflater.inflate(R.layout.child_item, parent, false);
+                holder.price = (TextView) convertView.findViewById(R.id.price);
+                holder.tcat = (TextView) convertView.findViewById(R.id.tcat);
                 convertView.setTag(holder);
             } else {
                 holder = (ChildHolder) convertView.getTag();
             }
-            holder.title.setText(item.title);
-            holder.hint.setText(item.hint);
-            if (item.hint == null)
-            {
-                holder.title.setHeight(92);
-                holder.hint.setTextSize(0);
-            }
-            else
-            {
-                holder.title.setHeight(47);
-                holder.hint.setTextSize(13);
-            }
+            holder.price.setText(item.getPrice());
+            holder.tcat.setText(item.getTCat());
             return convertView;
         }
         @Override
         public int getRealChildrenCount(int groupPosition) {
-            return items.get(groupPosition).items.size();
+           return items.get(groupPosition).getChild().size();
         }
         @Override
-        public GroupItem getGroup(int groupPosition) {
+        public ExpandableListViewGroupItem getGroup(int groupPosition) {
             return items.get(groupPosition);
         }
         @Override
@@ -385,7 +420,7 @@ public class MainActivity extends Activity {
         @Override
         public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
             GroupHolder holder;
-            GroupItem item = getGroup(groupPosition);
+            ExpandableListViewGroupItem item = getGroup(groupPosition);
             if (convertView == null) {
                 holder = new GroupHolder();
                 convertView = inflater.inflate(R.layout.group_item, parent, false);
@@ -394,7 +429,13 @@ public class MainActivity extends Activity {
             } else {
                 holder = (GroupHolder) convertView.getTag();
             }
-            holder.title.setText(item.title);
+            holder.title.setText(item.getTitle());
+            if (item.getChild().getStatus().length() == 4)
+                holder.title.setTextColor(getResources().getColor(R.color.actionbar_color));
+            else if (item.getChild().getStatus().equals("已收貨"))
+                holder.title.setTextColor(getResources().getColor(R.color.blue));
+            else
+                holder.title.setTextColor(getResources().getColor(R.color.green));
             return convertView;
         }
         @Override
@@ -546,6 +587,8 @@ public class MainActivity extends Activity {
     void InitOrder()
     {
         mList = (AnimatedExpandableListView) super.findViewById(R.id.OrderList);
+        mList.setScrollViewCallbacks(MainActivity.this);
+
         layout = (PullRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         layout.setRefreshStyle(PullRefreshLayout.STYLE_MATERIAL);
         layout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
@@ -629,83 +672,124 @@ public class MainActivity extends Activity {
         mList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v,
-                                        int groupPosition, int childPosition, long id) {
+                                       final int groupPosition, final int childPosition, long id) {
                 if (layout.isRefreshing())
                     return true;
-                switch (childPosition) {
-                    case 0:
-                        if (OrderListAdapter.getChild(groupPosition, childPosition).title.length() == 9) {
-                            mSingleChoice = 0;
-                            new AlertDialogPro.Builder(MainActivity.this)
-                                    .setIcon(R.drawable.ic_payment_white_48dp)
-                                    .setTitle("繳費")
-                                    .setSingleChoiceItems(new String[]{"7-11繳費", "全家繳費", "取消訂單"},
-                                            0,
-                                            new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    mSingleChoice = which;
-                                                }
-                                            })
-                                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+
+                if (OrderListAdapter.getChild(groupPosition, childPosition).getStatus().length() == 4) {
+                    mSingleChoice = 0;
+                    new AlertDialogPro.Builder(MainActivity.this)
+                            .setIcon(R.drawable.ic_launcher)
+                            .setTitle("MI Order")
+                            .setSingleChoiceItems(new String[]{"7-11繳費", "全家繳費", "收件資料", "訂單明細", "取消訂單"},
+                                    0,
+                                    new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            switch (mSingleChoice)
-                                            {
-                                                case 0:
-                                                    _bank = "seven_eleven";
-                                                    LoadingDialog.setMessage("Loading...");
-                                                    LoadingDialog.show();
-                                                    new Thread(PinCodeRunnable).start();
-                                                    break;
-                                                case 1:
-                                                    _bank = "familymart";
-                                                    LoadingDialog.setMessage("Loading...");
-                                                    LoadingDialog.show();
-                                                    new Thread(PinCodeRunnable).start();
-                                                    break;
-                                                case 2:
-                                                    new AlertDialogPro.Builder(MainActivity.this)
-                                                            .setTitle("MI Order")
-                                                            .setIcon(R.drawable.ic_warning_amber_48dp)
-                                                            .setMessage("是否取消訂單？")
-                                                            .setNegativeButton("取消", null)
-                                                            .setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                                                                @Override
-                                                                public void onClick(DialogInterface dialog, int which) {
-                                                                    LoadingDialog.setMessage("Loading...");
-                                                                    LoadingDialog.show();
-                                                                    new Thread(CancelRunnable).start();
-                                                                }
-                                                            }).show();
-                                                    break;
-                                            }
+                                            mSingleChoice = which;
                                         }
-                                    }).show();
-                        }
-                        break;
-                    case 2:
-                        if (!OrderListAdapter.getChild(groupPosition, childPosition).title.equals("運輸單號：")) {
-                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID=" + OrderListAdapter.getChild(groupPosition, childPosition).title.split("：")[1]));
-                            startActivity(browserIntent);
-                        }
-                        break;
-                    case 3:
-                        new AlertDialogPro.Builder(MainActivity.this).setTitle("收件資料")
-                                .setIcon(R.drawable.ic_contacts_white_48dp)
-                                .setItems(Detail[groupPosition], null)
-                                .setPositiveButton("確定", null)
-                                .show();
-                        break;
-                    case 4:
-                        String[] NewOrderDetail = Arrays.copyOf(OrderDetail[groupPosition], OrderDetailCount[groupPosition][0]);
-                        System.out.println(OrderDetailCount[groupPosition][0]);
-                        new AlertDialogPro.Builder(MainActivity.this).setTitle("訂單明細")
-                                .setIcon(R.drawable.ic_receipt_white_48dp)
-                                .setItems(NewOrderDetail, null)
-                                .setPositiveButton("確定", null)
-                                .show();
-                        break;
+                                    })
+                            .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    switch (mSingleChoice)
+                                    {
+                                        case 0:
+                                            _bank = "seven_eleven";
+                                            LoadingDialog.setMessage("Loading...");
+                                            LoadingDialog.show();
+                                            new Thread(PinCodeRunnable).start();
+                                            break;
+                                        case 1:
+                                            _bank = "familymart";
+                                            LoadingDialog.setMessage("Loading...");
+                                            LoadingDialog.show();
+                                            new Thread(PinCodeRunnable).start();
+                                            break;
+                                        case 2:
+                                            new AlertDialogPro.Builder(MainActivity.this).setTitle("收件資料")
+                                                    .setIcon(R.drawable.ic_contacts_white_48dp)
+                                                    .setItems(Detail[groupPosition], null)
+                                                    .setPositiveButton("確定", null)
+                                                    .show();
+                                            break;
+                                        case 3:
+                                            String[] NewOrderDetail = Arrays.copyOf(OrderDetail[groupPosition], OrderDetailCount[groupPosition][0]);
+                                            System.out.println(OrderDetailCount[groupPosition][0]);
+                                            new AlertDialogPro.Builder(MainActivity.this).setTitle("訂單明細")
+                                                    .setIcon(R.drawable.ic_receipt_white_48dp)
+                                                    .setItems(NewOrderDetail, null)
+                                                    .setPositiveButton("確定", null)
+                                                    .show();
+                                            break;
+                                        case 4:
+                                            new AlertDialogPro.Builder(MainActivity.this)
+                                                    .setTitle("MI Order")
+                                                    .setIcon(R.drawable.ic_warning_amber_48dp)
+                                                    .setMessage("是否取消訂單？")
+                                                    .setNegativeButton("取消", null)
+                                                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(DialogInterface dialog, int which) {
+                                                            LoadingDialog.setMessage("Loading...");
+                                                            LoadingDialog.show();
+                                                            new Thread(CancelRunnable).start();
+                                                        }
+                                                    }).show();
+                                            break;
+                                    }
+                                }
+                            }).show();
+                }else {
+                    mSingleChoice = 0;
+                    String[] data;
+                    if (OrderListAdapter.getChild(groupPosition, childPosition).getTCat().length() == 9)
+                        data = new String[]{"收件資料", "訂單明細"};
+                    else
+                        data = new String[]{"收件資料", "訂單明細", "黑貓宅急便"};
+
+                    new AlertDialogPro.Builder(MainActivity.this)
+                            .setIcon(R.drawable.ic_launcher)
+                            .setTitle("MI Order")
+                            .setSingleChoiceItems(data,
+                                    0,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            mSingleChoice = which;
+                                        }
+                                    })
+                            .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    switch (mSingleChoice)
+                                    {
+
+                                        case 0:
+                                            new AlertDialogPro.Builder(MainActivity.this).setTitle("收件資料")
+                                                    .setIcon(R.drawable.ic_contacts_white_48dp)
+                                                    .setItems(Detail[groupPosition], null)
+                                                    .setPositiveButton("確定", null)
+                                                    .show();
+                                            break;
+                                        case 1:
+                                            String[] NewOrderDetail = Arrays.copyOf(OrderDetail[groupPosition], OrderDetailCount[groupPosition][0]);
+                                            System.out.println(OrderDetailCount[groupPosition][0]);
+                                            new AlertDialogPro.Builder(MainActivity.this).setTitle("訂單明細")
+                                                    .setIcon(R.drawable.ic_receipt_white_48dp)
+                                                    .setItems(NewOrderDetail, null)
+                                                    .setPositiveButton("確定", null)
+                                                    .show();
+                                            break;
+                                        case 2:
+                                            if (!OrderListAdapter.getChild(groupPosition, childPosition).getTCat().equals("運輸單號：")) {
+                                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID=" + OrderListAdapter.getChild(groupPosition, childPosition).getTCat().split("：")[1]));
+                                                startActivity(browserIntent);
+                                            }
+                                            break;
+                                    }
+                                }
+                            }).show();
                 }
                 return false;
             }
@@ -719,6 +803,10 @@ public class MainActivity extends Activity {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if ((totalItemCount - visibleItemCount) == firstVisibleItem)
+                    _OrderListViewIsEnd = true;
+                else
+                    _OrderListViewIsEnd = false;
                 if (firstVisibleItem != 0)
                     layout.setEnabled(false);
                 else
@@ -735,7 +823,7 @@ public class MainActivity extends Activity {
                 if (layout.isRefreshing())
                     return true;
 
-                _OrderId = OrderListAdapter.getGroup(groupPosition).title.split("：")[1];
+                _OrderId = OrderListAdapter.getGroup(groupPosition).getTitle().split("：")[1];
                 if (OldPosition != -1 && OldPosition != groupPosition)
                     mList.collapseGroup(OldPosition);
                 OldPosition = groupPosition;
@@ -823,6 +911,7 @@ public class MainActivity extends Activity {
             switch (msg.what)
             {
                 case -1:
+                    mList.setScrollable(false);
                     layout.setRefreshing(true);
                     break;
                 case 1:
@@ -831,6 +920,7 @@ public class MainActivity extends Activity {
                     mList.setAdapter(OrderListAdapter);
                     break;
                 case 2:
+                    mList.setScrollable(true);
                     layout.setRefreshing(false);
                     break;
             }
@@ -858,6 +948,16 @@ public class MainActivity extends Activity {
                             setPositiveButton("確定", null).show();
                     break;
             }
+        };
+    };
+
+    private Handler HeaderHandler = new Handler() {
+        @Override
+        public void handleMessage(android.os.Message msg) {
+            final FrameLayout actionBar = (FrameLayout)findViewById(R.id.action_bar);
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) actionBar.getLayoutParams();
+            params.setMargins(0, msg.what, 0, 0);
+            actionBar.setLayoutParams(params);
         };
     };
 
@@ -937,13 +1037,8 @@ public class MainActivity extends Activity {
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        // TODO Auto-generated method stub
         super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // 什麼都不用寫
-        }
-        else {
-            // 什麼都不用寫
-        }
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) { }
+        else { }
     }
 }

@@ -34,3 +34,6 @@
 [submodule "Titanic"]
 	path = Titanic
 	url = https://github.com/RomainPiel/Titanic.git
+[submodule "ObservableScrollView"]
+	path = ObservableScrollView
+	url = https://github.com/ksoichiro/Android-ObservableScrollView.git

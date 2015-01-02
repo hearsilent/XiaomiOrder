@@ -15,6 +15,7 @@ Xiaomi Order
 - AnimatedExpandableListView
 - Titanic for Android
 - BottomSheet
+- ObservableScrollView
 
 ## 待開發功能:
-- Order (UI優化)
+- Order (Animate優化)

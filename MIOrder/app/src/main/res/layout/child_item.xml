@@ -1,0 +1,34 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants">
+
+
+    <TextView
+        android:id="@+id/tcat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="運輸單號：xxxxxxxxxx"
+        android:textSize="18sp"
+        android:textColor="@color/grey"
+        android:layout_marginTop="6sp"
+        android:layout_marginLeft="50sp"
+        android:paddingRight="10sp" />
+
+    <TextView
+        android:id="@+id/price"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tcat"
+        tools:text="NT$690　(已收貨)"
+        android:textSize="18sp"
+        android:layout_marginTop="5sp"
+        android:textColor="@color/grey"
+        android:layout_marginLeft="50sp"
+        android:textStyle="bold"
+        android:paddingBottom="6sp"
+        android:paddingRight="10sp" />
+
+</RelativeLayout>
